@@ -1,0 +1,11 @@
+# Render.com Deployment Configuration
+# This file tells Render how to build and run your app
+
+# Build Command
+buildCommand: pip install -r requirements_webapp.txt
+
+# Start Command
+startCommand: gunicorn app_production:app --bind 0.0.0.0:$PORT --workers 2 --timeout 300
+
+# Environment
+python: 3.9.0

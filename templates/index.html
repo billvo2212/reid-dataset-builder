@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Re-ID Dataset Builder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .upload-section {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            margin-bottom: 30px;
+        }
+
+        .camera-section {
+            margin-bottom: 40px;
+        }
+
+        .camera-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .camera-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .camera-icon {
+            font-size: 1.8rem;
+        }
+
+        .upload-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .dropzone {
+            border: 3px dashed #ddd;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: #fafafa;
+            position: relative;
+        }
+
+        .dropzone:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .dropzone.dragover {
+            border-color: #667eea;
+            background: #e8edff;
+            transform: scale(1.02);
+        }
+
+        .dropzone.has-file {
+            border-color: #10b981;
+            background: #ecfdf5;
+        }
+
+        .dropzone-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        .dropzone.has-file .dropzone-icon {
+            opacity: 1;
+        }
+
+        .dropzone-text {
+            color: #666;
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+
+        .dropzone-hint {
+            color: #999;
+            font-size: 0.85rem;
+        }
+
+        .file-info {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(16, 185, 129, 0.1);
+            border-radius: 8px;
+            display: none;
+        }
+
+        .dropzone.has-file .file-info {
+            display: block;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #10b981;
+            word-break: break-all;
+        }
+
+        .file-size {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .process-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 30px;
+        }
+
+        .process-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .process-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            display: none;
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .results-title {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .results-icon {
+            text-align: center;
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .download-button {
+            width: 100%;
+            padding: 18px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: block;
+            text-align: center;
+        }
+
+        .download-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.4);
+        }
+
+        .error-message {
+            display: none;
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        .optional-label {
+            display: inline-block;
+            background: #f3f4f6;
+            color: #6b7280;
+            font-size: 0.75rem;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-left: 10px;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .upload-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .upload-section {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎥 Re-ID Dataset Builder</h1>
+            <p>Upload videos and bounding boxes to create person re-identification datasets</p>
+        </div>
+
+        <div class="upload-section">
+            <form id="uploadForm">
+                <!-- Entrance Camera Section -->
+                <div class="camera-section">
+                    <h2 class="camera-title">
+                        <span class="camera-icon">🚪</span>
+                        Entrance Camera
+                    </h2>
+                    <div class="upload-grid">
+                        <div class="dropzone" id="entrance-video-zone">
+                            <div class="dropzone-icon">🎬</div>
+                            <div class="dropzone-text">Drop video file here</div>
+                            <div class="dropzone-hint">or click to browse (MP4, AVI, MOV)</div>
+                            <input type="file" id="entrance-video-input" accept="video/*" style="display: none;">
+                            <div class="file-info">
+                                <div class="file-name" id="entrance-video-name"></div>
+                                <div class="file-size" id="entrance-video-size"></div>
+                            </div>
+                        </div>
+
+                        <div class="dropzone" id="entrance-bboxes-zone">
+                            <div class="dropzone-icon">📦</div>
+                            <div class="dropzone-text">Drop bounding boxes</div>
+                            <div class="dropzone-hint">or click to browse (JSON file)</div>
+                            <input type="file" id="entrance-bboxes-input" accept=".json" style="display: none;">
+                            <div class="file-info">
+                                <div class="file-name" id="entrance-bboxes-name"></div>
+                                <div class="file-size" id="entrance-bboxes-size"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Exit Camera Section -->
+                <div class="camera-section">
+                    <h2 class="camera-title">
+                        <span class="camera-icon">🚶</span>
+                        Exit Camera
+                    </h2>
+                    <div class="upload-grid">
+                        <div class="dropzone" id="exit-video-zone">
+                            <div class="dropzone-icon">🎬</div>
+                            <div class="dropzone-text">Drop video file here</div>
+                            <div class="dropzone-hint">or click to browse (MP4, AVI, MOV)</div>
+                            <input type="file" id="exit-video-input" accept="video/*" style="display: none;">
+                            <div class="file-info">
+                                <div class="file-name" id="exit-video-name"></div>
+                                <div class="file-size" id="exit-video-size"></div>
+                            </div>
+                        </div>
+
+                        <div class="dropzone" id="exit-bboxes-zone">
+                            <div class="dropzone-icon">📦</div>
+                            <div class="dropzone-text">Drop bounding boxes</div>
+                            <div class="dropzone-hint">or click to browse (JSON file)</div>
+                            <input type="file" id="exit-bboxes-input" accept=".json" style="display: none;">
+                            <div class="file-info">
+                                <div class="file-name" id="exit-bboxes-name"></div>
+                                <div class="file-size" id="exit-bboxes-size"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="process-button" id="processButton" disabled>
+                    🚀 Process Videos
+                </button>
+
+                <div class="error-message" id="errorMessage"></div>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <h3>Processing your videos...</h3>
+                <p>This may take a few minutes depending on video length</p>
+            </div>
+        </div>
+
+        <div class="results" id="results">
+            <div class="results-icon">✅</div>
+            <h2 class="results-title">Processing Complete!</h2>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="entranceCount">0</div>
+                    <div class="stat-label">Entrance Detections</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="exitCount">0</div>
+                    <div class="stat-label">Exit Detections</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalCount">0</div>
+                    <div class="stat-label">Total Detections</div>
+                </div>
+            </div>
+
+            <a href="#" class="download-button" id="downloadButton">
+                📥 Download Dataset (ZIP)
+            </a>
+
+            <div style="margin-top: 30px; padding: 20px; background: #f8fafc; border-radius: 12px;">
+                <h3 style="margin-bottom: 15px; color: #333;">📦 Included Files:</h3>
+                <ul style="list-style: none; padding-left: 0; color: #666;">
+                    <li style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">✓ entrance_detections.csv</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">✓ exit_detections.csv</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">✓ combined_data.json</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">✓ entrance_person_crops.npz</li>
+                    <li style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">✓ exit_person_crops.npz</li>
+                    <li style="padding: 8px 0;">✓ summary.txt</li>
+                </ul>
+            </div>
+
+            <button onclick="location.reload()" style="margin-top: 20px; width: 100%; padding: 15px; background: #6b7280; color: white; border: none; border-radius: 12px; font-size: 1rem; cursor: pointer;">
+                Process Another Dataset
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // File size formatter
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+        }
+
+        // Setup dropzone
+        function setupDropzone(zoneId, inputId, nameId, sizeId) {
+            const zone = document.getElementById(zoneId);
+            const input = document.getElementById(inputId);
+            const nameEl = document.getElementById(nameId);
+            const sizeEl = document.getElementById(sizeId);
+
+            zone.addEventListener('click', () => input.click());
+
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('dragover');
+            });
+
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('dragover');
+            });
+
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    input.files = files;
+                    updateFileInfo(files[0], zone, nameEl, sizeEl);
+                }
+            });
+
+            input.addEventListener('change', (e) => {
+                if (e.target.files.length > 0) {
+                    updateFileInfo(e.target.files[0], zone, nameEl, sizeEl);
+                }
+            });
+        }
+
+        function updateFileInfo(file, zone, nameEl, sizeEl) {
+            zone.classList.add('has-file');
+            nameEl.textContent = file.name;
+            sizeEl.textContent = formatFileSize(file.size);
+            checkFormValidity();
+        }
+
+        function checkFormValidity() {
+            const entranceVideo = document.getElementById('entrance-video-input').files.length > 0;
+            const entranceBboxes = document.getElementById('entrance-bboxes-input').files.length > 0;
+            
+            document.getElementById('processButton').disabled = !(entranceVideo && entranceBboxes);
+        }
+
+        // Setup all dropzones
+        setupDropzone('entrance-video-zone', 'entrance-video-input', 'entrance-video-name', 'entrance-video-size');
+        setupDropzone('entrance-bboxes-zone', 'entrance-bboxes-input', 'entrance-bboxes-name', 'entrance-bboxes-size');
+        setupDropzone('exit-video-zone', 'exit-video-input', 'exit-video-name', 'exit-video-size');
+        setupDropzone('exit-bboxes-zone', 'exit-bboxes-input', 'exit-bboxes-name', 'exit-bboxes-size');
+
+        // Form submission
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData();
+            formData.append('entrance_video', document.getElementById('entrance-video-input').files[0]);
+            formData.append('entrance_bboxes', document.getElementById('entrance-bboxes-input').files[0]);
+
+            const exitVideo = document.getElementById('exit-video-input').files[0];
+            const exitBboxes = document.getElementById('exit-bboxes-input').files[0];
+            
+            if (exitVideo) formData.append('exit_video', exitVideo);
+            if (exitBboxes) formData.append('exit_bboxes', exitBboxes);
+
+            // Show loading
+            document.querySelector('.upload-section').style.display = 'none';
+            document.getElementById('loading').classList.add('active');
+
+            try {
+                const response = await fetch('/process', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    // Show results
+                    document.getElementById('loading').classList.remove('active');
+                    document.getElementById('results').classList.add('active');
+                    
+                    document.getElementById('entranceCount').textContent = result.entrance_detections;
+                    document.getElementById('exitCount').textContent = result.exit_detections;
+                    document.getElementById('totalCount').textContent = result.entrance_detections + result.exit_detections;
+                    document.getElementById('downloadButton').href = result.download_url;
+                } else {
+                    throw new Error(result.error || 'Processing failed');
+                }
+            } catch (error) {
+                document.getElementById('loading').classList.remove('active');
+                document.querySelector('.upload-section').style.display = 'block';
+                
+                const errorMsg = document.getElementById('errorMessage');
+                errorMsg.textContent = '❌ Error: ' + error.message;
+                errorMsg.classList.add('active');
+            }
+        });
+    </script>
+</body>
+</html>
