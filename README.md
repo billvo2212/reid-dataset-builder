@@ -8,8 +8,9 @@ This app lets you upload **videos or ZIPs of images** plus **bounding-box JSON**
 
 For ZIPs of images, the app **assumes each image represents 1 second** of the original video.
 
-## Use it online (takes a few minute for it to boot up, be patient):
-Link: https://reid-dataset-builder.onrender.com
+## Try it online (takes a few minute for it to boot up, be patient):
+(Due to some constrains, only put a very small set of images or video to avoid server timeout)
+- Link: https://reid-dataset-builder.onrender.com/
 
 ## DEMO 
 <img width="1247" height="667" alt="Screenshot 2025-11-24 at 4 23 42 PM" src="https://github.com/user-attachments/assets/4d9a49d3-6277-431e-8310-1f43eec5449c" />
