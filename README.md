@@ -19,6 +19,8 @@ For ZIPs of images, the app **assumes each image represents 1 second** of the or
 
 ---
 
+## Try it locally
+
 ## 1. Requirements
 
 - Python 3.9+ (recommended)
